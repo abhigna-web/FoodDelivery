@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Food Delivery</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+    body {background-color: #fc8019; color: white;}
+
+    /* Header */
+    header {
+      display: flex; justify-content: space-between; align-items: center; 
+      padding: 20px 60px; background-color: #fc8019; position: sticky; top: 0; z-index: 999;
+      flex-wrap: wrap;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px;}
+    .header-right { display: flex; align-items: center; gap: 20px;}
+    .logo { font-size: 26px; font-weight: bold;}
+    .btn { background-color: black; color: white; padding: 10px 20px; border-radius: 10px; font-weight: bold; text-decoration: none; cursor: pointer; transition: 0.2s; }
+    .btn:hover { transform: scale(1.05);}
+    .cart-icon { position: relative; font-size: 22px; cursor: pointer;}
+    #cart-count { position: absolute; top: -10px; right: -10px; background-color: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; font-weight: bold; }
+
+    /* Search box */
+    .main-content { display: flex; justify-content: center; align-items: center; height: 50vh; position: relative;}
+    .search-box { background-color: white; padding: 20px 30px; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); display: flex; gap: 20px; align-items: center; width: 900px; transition: transform 0.2s ease;}
+    .input-group { position: relative; flex: 1; transition: transform 0.2s ease; cursor: pointer;}
+    .input-group:hover { transform: scale(1.02);}
+    .input-group.location::before { content: '📍'; position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none;}
+    .input-group input { width: 100%; padding: 16px 20px 16px 40px; font-size: 16px; border: 1px solid #ccc; border-radius: 12px;}
+
+    @media (max-width: 768px) {
+      header { padding: 20px; flex-direction: column; gap: 15px;}
+      .search-box { flex-direction: column; width: 90%;}
+      .food-grid { grid-template-columns: repeat(1, 1fr);}
+      .menu-card { flex-direction: column; text-align: center;}
+      .menu-img img { width: 120px; height: 120px;}
+    }
+
+    /* Food Section */
+    .food-section { background-color: white; padding: 60px 40px; text-align: center; color: #1c1c1c;}
+    .food-section h2 { margin-bottom: 40px; font-size: 28px;}
+    .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 50px 30px; max-width: 1000px; margin: 0 auto;}
+    .food-card { transition: transform 0.3s ease; cursor: pointer;}
+    .food-card:hover { transform: scale(1.1);}
+    .food-card img { width: 120px; height: 120px; object-fit: cover; border-radius: 12px;}
+    .food-label { margin-top: 10px; font-size: 16px; font-weight: 500;}
+
+    /* Menu Section */
+    .menu-section { padding: 50px; background: #fff; color: #1c1c1c; display: none;}
+    .menu-section.active { display: block;}
+    .menu-section h2 { text-align: center; margin-bottom: 40px; font-size: 28px;}
+    .menu-card { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #ddd; padding: 20px 0; gap: 20px;}
+    .menu-info { flex: 2;}
+    .menu-info h3 { font-size: 20px; margin-bottom: 5px;}
+    .price { font-size: 18px; margin-bottom: 5px;}
+    .price .old { text-decoration: line-through; color: gray; margin-right: 5px;}
+    .rating { color: green; font-weight: bold; margin-bottom: 10px;}
+    .desc { font-size: 15px; color: #555;}
+    .menu-img { flex: 1; text-align: center;}
+    .menu-img img { width: 160px; height: 160px; object-fit: cover; border-radius: 12px; margin-bottom: 10px;}
+    .add-btn { background-color: #00a82d; color: white; border: none; padding: 8px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+    .add-btn:hover { background-color: #008f26;}
+
+    /* Cart Page */
+    .cart-page { display: none; background: #fff; color: #1c1c1c; padding: 40px;}
+    .cart-page h2 { text-align: center; margin-bottom: 30px; font-size: 28px;}
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #ddd;}
+    .cart-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px;}
+    .cart-item-details { flex: 1; margin-left: 15px;}
+    .cart-item-details h4 { font-size: 18px; margin-bottom: 5px;}
+    .cart-item-details p { font-size: 14px; margin-bottom: 5px;}
+    .cart-total { text-align: right; font-size: 20px; margin-top: 20px; font-weight: bold;}
+    .checkout-btn { background-color: #fc8019; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;}
+    
+    /* Payment modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 999;}
+    .modal-content { background: white; color: black; padding: 30px; border-radius: 12px; width: 300px; text-align: center;}
+    .modal-content h3 { margin-bottom: 20px;}
+    .payment-option { margin: 10px 0; cursor: pointer; padding: 10px; border: 1px solid #ccc; border-radius: 8px;}
+    .pay-btn { background-color: #00a82d; color: white; padding: 10px 20px; border: none; border-radius: 8px; margin-top: 15px; cursor: pointer; font-weight: bold;}
+    
+    /* Notification */
+    .notification { position: fixed; top: 20px; right: 20px; background: green; color: white; padding: 10px 20px; border-radius: 8px; display: none; z-index: 1000;}
+
+	.payment-option.selected {
+  border: 2px solid green;
+  background-color: #e0ffe0;
+}
+
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header id="header">
+    <div class="header-left">
+      <a href="#" class="btn" onclick="goHome()">Home</a>
+    </div>
+    <div class="logo">Food Delivery</div>
+    <div class="header-right">
+      <a href="#" class="btn">Sign in</a>
+      <div class="cart-icon" onclick="goToCart()">🛒 <span id="cart-count">0</span></div>
+    </div>
+  </header>
+
+  <!-- Search Box -->
+  <div class="main-content">
+    <div class="search-box">
+      <div class="input-group location"><input type="text" placeholder="Enter your delivery location" /></div>
+      <div class="input-group"><input type="text" placeholder="Search for restaurant, item or more" /></div>
+    </div>
+  </div>
+
+  <!-- Food Section -->
+  <section class="food-section">
+    <h2>Order our best food options</h2>
+    <div class="food-grid">
+      <div class="food-card" onclick="showMenu('biryani')">
+        <img src="https://cdn.pixabay.com/photo/2022/02/12/15/00/biryani-7009110_1280.jpg" alt="Biryani">
+        <div class="food-label">Biryani</div>
+      </div>
+      <div class="food-card" onclick="showMenu('pizza')">
+        <img src="https://cdn.pixabay.com/photo/2017/12/09/08/18/pizza-3007395_1280.jpg" alt="Pizza">
+        <div class="food-label">Pizza</div>
+      </div>
+      <div class="food-card" onclick="showMenu('noodles')">
+        <img src="https://cdn.pixabay.com/photo/2021/12/29/23/39/spicy-noodle-6902956_1280.jpg" alt="Noodles">
+        <div class="food-label">Noodles</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pizza Menu -->
+  <section id="pizza" class="menu-section">
+    <h2>Pizza Menu</h2>
+
+    <div class="menu-card">
+      <div class="menu-info">
+        <h3>Margherita Pizza</h3>
+        <p class="price"><span class="old">₹299</span> ₹249</p>
+        <p class="rating">⭐ 4.3 (180)</p>
+        <p class="desc">Classic cheese pizza topped with mozzarella, tomato sauce, and basil.</p>
+      </div>
+      <div class="menu-img">
+        <img src="https://cdn.pixabay.com/photo/2017/12/09/08/18/pizza-3007395_1280.jpg" alt="Margherita Pizza">
+        <button class="add-btn" onclick="addToCart('Margherita Pizza',249,'https://cdn.pixabay.com/photo/2017/12/09/08/18/pizza-3007395_1280.jpg')">ADD</button>
+      </div>
+    </div>
+
+    <div class="menu-card">
+      <div class="menu-info">
+        <h3>Pepperoni Pizza</h3>
+        <p class="price"><span class="old">₹349</span> ₹299</p>
+        <p class="rating">⭐ 4.6 (250)</p>
+        <p class="desc">Loaded with spicy pepperoni slices, mozzarella cheese, and tomato base.</p>
+      </div>
+      <div class="menu-img">
+        <img src="https://arecipeforfun.com/wp-content/uploads/2025/03/Edits-Turkey-Pepperoni-Pizza-Recipe-15-1024x1536.jpg" alt="Pepperoni Pizza">
+        <button class="add-btn" onclick="addToCart('Pepperoni Pizza',299,'https://arecipeforfun.com/wp-content/uploads/2025/03/Edits-Turkey-Pepperoni-Pizza-Recipe-15-1024x1536.jpg')">ADD</button>
+      </div>
+    </div>
+
+    <div class="menu-card">
+      <div class="menu-info">
+        <h3>Veggie Supreme Pizza</h3>
+        <p class="price"><span class="old">₹329</span> ₹279</p>
+        <p class="rating">⭐ 4.2 (140)</p>
+        <p class="desc">Topped with bell peppers, onions, mushrooms, and black olives.</p>
+      </div>
+      <div class="menu-img">
+        <img src="https://cdn.pixabay.com/photo/2015/12/07/22/27/pizza-1081534_1280.jpg" alt="Veggie Supreme Pizza">
+        <button class="add-btn" onclick="addToCart('Veggie Supreme Pizza',279,'https://cdn.pixabay.com/photo/2015/12/07/22/27/pizza-1081534_1280.jpg')">ADD</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Biryani Menu -->
+  <section id="biryani" class="menu-section">
+    <h2>Biryani Menu</h2>
+
+    <div class="menu-card">
+      <div class="menu-info">
+        <h3>Chicken Keema Biryani</h3>
+        <p class="price"><span class="old">₹215</span> ₹199</p>
+        <p class="rating">⭐ 4.0 (105)</p>
+        <p class="desc">A flavorful Chicken Keema Biryani served in a Bowl, combining seasoned minced chicken with fragrant rice.</p>
+      </div>
+      <div class="menu-img">
+        <img src="https://cdn.pixabay.com/photo/2022/02/12/15/00/biryani-7009110_1280.jpg" alt="Chicken Keema Biryani">
+        <button class="add-btn" onclick="addToCart('Chicken Keema Biryani',199,'https://cdn.pixabay.com/photo/2022/02/12/15/00/biryani-7009110_1280.jpg')">ADD</button>
+      </div>
+    </div>
+
+    <div class="menu-card">
+      <div class="menu-info">
+        <h3>Hyderabadi Dum Biryani</h3>
+        <p class="price"><span class="old">₹280</span> ₹249</p>
+        <p class="rating">⭐ 4.5 (320)</p>
+        <p class="desc">Authentic Hyderabadi Dum Biryani cooked with basmati rice, tender chicken, and rich spices.</p>
+      </div>
+      <div class="menu-img">
+        <img src="https://static.wixstatic.com/media/c47167_4e575594ceab4c95b6d3ad001890c0c7~mv2.webp" alt="Hyderabadi Dum Biryani">
+        <button class="add-btn" onclick="addToCart('Hyderabadi Dum Biryani',249,'https://static.wixstatic.com/media/c47167_4e575594ceab4c95b6d3ad001890c0c7~mv2.webp')">ADD</button>
+      </div>
+    </div>
+
+    <div class="menu-card">
+      <div class="menu-info">
+        <h3>Veg Biryani</h3>
+        <p class="price"><span class="old">₹180</span> ₹159</p>
+        <p class="rating">⭐ 4.1 (210)</p>
+        <p class="desc">Aromatic rice layered with fresh vegetables and mild spices, served with raita.</p>
+      </div>
+      <div class="menu-img">
+        <img src="https://www.indianveggiedelight.com/wp-content/uploads/2020/04/veg-biryani-instant-pot.jpg" alt="Veg Biryani">
+        <button class="add-btn" onclick="addToCart('Veg Biryani',159,'https://www.indianveggiedelight.com/wp-content/uploads/2020/04/veg-biryani-instant-pot.jpg')">ADD</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Noodles Menu -->
+  <section id="noodles" class="menu-section">
+    <h2>Noodles Menu</h2>
+
+    <div class="menu-card">
+      <div class="menu-info">
+        <h3>Hakka Noodles</h3>
+        <p class="price"><span class="old">₹199</span> ₹159</p>
+        <p class="rating">⭐ 4.4 (160)</p>
+        <p class="desc">Stir-fried noodles with fresh vegetables and soy sauce.</p>
+      </div>
+      <div class="menu-img">
+        <img src="https://cdn.pixabay.com/photo/2021/12/29/23/39/spicy-noodle-6902956_1280.jpg" alt="Hakka Noodles">
+        <button class="add-btn" onclick="addToCart('Hakka Noodles',159,'https://cdn.pixabay.com/photo/2021/12/29/23/39/spicy-noodle-6902956_1280.jpg')">ADD</button>
+      </div>
+    </div>
+
+    <div class="menu-card">
+      <div class="menu-info">
+        <h3>Chicken Noodles</h3>
+        <p class="price"><span class="old">₹229</span> ₹189</p>
+        <p class="rating">⭐ 4.5 (210)</p>
+        <p class="desc">Noodles tossed with tender chicken pieces and flavorful sauces.</p>
+      </div>
+      <div class="menu-img">
+        <img src="https://sinfullyspicy.com/wp-content/uploads/2023/01/2-7-1024x1536.jpg" alt="Chicken Noodles">
+               <button class="add-btn" onclick="addToCart('Chicken Noodles',189,'https://sinfullyspicy.com/wp-content/uploads/2023/01/2-7-1024x1536.jpg')">ADD</button>
+      </div>
+    </div>
+
+    <div class="menu-card">
+      <div class="menu-info">
+        <h3>Spicy Schezwan Noodles</h3>
+        <p class="price"><span class="old">₹239</span> ₹199</p>
+        <p class="rating">⭐ 4.3 (175)</p>
+        <p class="desc">Fiery noodles cooked with Schezwan sauce, garlic, and chili peppers.</p>
+      </div>
+      <div class="menu-img">
+        <img src="https://www.cookwithmanali.com/wp-content/uploads/2021/08/Schezwan-Noodles-1014x1536.jpg" alt="Schezwan Noodles">
+        <button class="add-btn" onclick="addToCart('Spicy Schezwan Noodles',199,'https://www.cookwithmanali.com/wp-content/uploads/2021/08/Schezwan-Noodles-1014x1536.jpg')">ADD</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cart Page -->
+  <section class="cart-page" id="cartPage">
+    <h2>Your Cart</h2>
+    <div id="cartItems"></div>
+    <div class="cart-total" id="cartTotal">Total: ₹0</div>
+    <button class="checkout-btn" onclick="openPayment()">Checkout</button>
+  </section>
+
+  <!-- Payment Modal -->
+  <div class="modal" id="paymentModal">
+    <div class="modal-content">
+      <h3>Select Payment Method</h3>
+      <div class="payment-option" onclick="selectPayment('Cash on Delivery')">Cash on Delivery</div>
+      <div class="payment-option" onclick="selectPayment('UPI')">UPI</div>
+      <div class="payment-option" onclick="selectPayment('Credit/Debit Card')">Credit/Debit Card</div>
+      <button class="pay-btn" onclick="placeOrder()">Pay & Place Order</button>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div class="notification" id="notification">Order Placed Successfully!</div>
+
+  <script>
+    let cart = [];
+    let selectedPayment = '';
+
+    function showMenu(menuId){
+      document.querySelector('.food-section').style.display='none';
+      document.querySelectorAll('.menu-section').forEach(sec => {
+        sec.style.display = (sec.id === menuId) ? 'block' : 'none';
+      });
+      document.getElementById('cartPage').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goHome(){
+      document.querySelector('.food-section').style.display='block';
+      document.querySelectorAll('.menu-section').forEach(sec => sec.style.display='none');
+      document.getElementById('cartPage').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function addToCart(name, price, image){
+      const item = cart.find(i => i.name === name);
+      if(item) item.quantity += 1;
+      else cart.push({name, price, image, quantity:1});
+      updateCartCount();
+    }
+
+    function updateCartCount(){
+      const count = cart.reduce((sum,i) => sum + i.quantity, 0);
+      document.getElementById('cart-count').innerText = count;
+    }
+
+    function goToCart(){
+      document.querySelector('.food-section').style.display='none';
+      document.querySelectorAll('.menu-section').forEach(sec => sec.style.display='none');
+      document.getElementById('cartPage').style.display='block';
+      renderCart();
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function renderCart(){
+      const cartItemsDiv = document.getElementById('cartItems');
+      cartItemsDiv.innerHTML = '';
+      let total = 0;
+      cart.forEach(item => {
+        total += item.price * item.quantity;
+        cartItemsDiv.innerHTML += `
+          <div class="cart-item">
+            <img src="${item.image}" />
+            <div class="cart-item-details">
+              <h4>${item.name}</h4>
+              <p>₹${item.price} x ${item.quantity}</p>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById('cartTotal').innerText = `Total: ₹${total}`;
+    }
+
+    function openPayment(){
+      if(cart.length === 0){ alert('Cart is empty!'); return; }
+      document.getElementById('paymentModal').style.display='flex';
+    }
+
+    function selectPayment(method){
+      selectedPayment = method;
+      alert(`Selected ${method}`);
+    }
+
+    function placeOrder(){
+      if(!selectedPayment){ alert('Select payment method'); return; }
+      document.getElementById('paymentModal').style.display='none';
+      document.getElementById('notification').style.display='block';
+      setTimeout(()=>{ document.getElementById('notification').style.display='none'; },3000);
+      cart = []; 
+      selectedPayment = '';
+      updateCartCount(); 
+      renderCart();
+      goHome();
+    }
+	function selectPayment(method){
+  selectedPayment = method;
+  document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+  </script>
+</body>
+</html>
